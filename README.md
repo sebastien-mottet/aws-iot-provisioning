@@ -69,3 +69,7 @@ To see all available script arguments execute:
 ```bash
 python3 provision_device.py --help
 ```
+
+## To be done
+
+- Create device in database
