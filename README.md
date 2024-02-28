@@ -6,7 +6,7 @@ First activate the virtual env and install dependencies
 
 ```bash
 pipenv shell
-pipenv install # Only once
+pipenv install # Only when Pipfile changes
 ```
 
 Add a `.env` file in the root directory.
@@ -62,7 +62,7 @@ And for S3
 You can run the script `provision_device.py` as follow:
 
 ```bash
-python3 provision_device.py --thing-name YOUR_THING_NAME 
+python3 provision_device.py --thing-name YOUR_THING_NAME --uuid YOUR_DEVICE_UUID
 ```
 
 To see all available script arguments execute:
