@@ -32,7 +32,8 @@ The user associated to the credentials should have the following permissions for
                 "iot:AttachPolicy",
                 "iot:AttachThingPrincipal",
                 "iot:DescribeThing",
-                "iot:CreateKeysAndCertificate"
+                "iot:CreateKeysAndCertificate",
+                "iot:DescribeEndpoint"
             ],
             "Resource": "*"
         }
