@@ -63,19 +63,19 @@ def create_thing(thing_name, policy_name):
 
 
 def save_to_s3(uuid, thing_name, bucket_name, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url):
-    cert_obj_key = uuid + '/' + thing_name + '.cert.pem'
+    cert_obj_key = uuid + '/' + thing_name + '.pem.crt'
     cert_object = s3.Object(bucket_name, cert_obj_key)
     cert_object.put(Body=certificate)
 
-    private_key_obj_key = uuid + '/' + thing_name + '.private.key'
+    private_key_obj_key = uuid + '/' + thing_name + '.private.pem.key'
     private_key_obj = s3.Object(bucket_name, private_key_obj_key)
     private_key_obj.put(Body=private_key)
 
-    pub_key_obj_key = uuid + '/' + thing_name + '.public.key'
+    pub_key_obj_key = uuid + '/' + thing_name + '.public.pem.key'
     pub_key_object = s3.Object(bucket_name, pub_key_obj_key)
     pub_key_object.put(Body=pub_key)
 
-    amazon_root_ca_obj_key = uuid + '/AmazonRootCA1.cert'
+    amazon_root_ca_obj_key = uuid + '/AmazonRootCA1.pem'
     amazon_root_ca_obj = s3.Object(bucket_name, amazon_root_ca_obj_key)
     amazon_root_ca_obj.put(Body=amazon_root_CA1)
 
@@ -84,12 +84,15 @@ def save_to_s3(uuid, thing_name, bucket_name, certificate, private_key, pub_key,
     endpoint_url_obj.put(Body=endpoint_url)
 
 
-def save_to_fs(thing_name, output_dir, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url):
-    private_key_path = os.path.join(output_dir, thing_name + '.private.key')
-    pub_key_path = os.path.join(output_dir, thing_name + '.public.key')
-    certiface_path = os.path.join(output_dir, thing_name + '.cert.pem')
-    amazon_root_ca_path = os.path.join(output_dir, 'AmazonRootCA1.cert')
-    endpoint_url_path = os.path.join(output_dir, 'endpoint_url.json')
+def save_to_fs(uuid, thing_name, output_dir, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url):
+    new_dir = os.path.join(output_dir, uuid)
+    if not os.path.exists(new_dir):
+        os.mkdir(new_dir)
+    amazon_root_ca_path = os.path.join(new_dir, 'AmazonRootCA1.pem')
+    private_key_path = os.path.join(new_dir, thing_name + '.private.pem.key')
+    pub_key_path = os.path.join(new_dir, thing_name + '.public.pem.key')
+    certiface_path = os.path.join(new_dir, thing_name + '.pem.crt')
+    endpoint_url_path = os.path.join(new_dir, thing_name + 'endpoint_url.json')
 
     with open(private_key_path, 'w') as file:
         file.write(private_key)
@@ -113,6 +116,7 @@ def get_amazon_root_ca(url):
 def get_endpoint_url():
     endpoint = iot_client.describe_endpoint()
     endpoint_url = endpoint.get('endpointAddress')
+    print(endpoint_url)
     return json.dumps({'url': endpoint_url}, indent=4)
 
 certificate, private_key, pub_key = create_thing(THING_NAME, POLICY_NAME)
@@ -122,7 +126,7 @@ amazon_root_CA1 = get_amazon_root_ca(ROOT_CA_URL)
 endpoint_url = get_endpoint_url()
 
 if LOCAL_SAVE:
-    save_to_fs(THING_NAME, OUTPUT_DIR, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url)
+    save_to_fs(UUID, THING_NAME, OUTPUT_DIR, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url)
 
 if S3_SAVE:
     save_to_s3(UUID, THING_NAME, BUCKET_NAME, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url)
