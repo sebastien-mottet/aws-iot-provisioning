@@ -16,6 +16,7 @@ The `.env` file should contain the following variables:
 ```bash
 AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
 AWS_SECRET_ACCESS_KEY=YOUR_SECERT_ACCESS_KEY
+DEVICE_PROVISIONING_ACCESS_KEY=YOUR_DEVICE_PROVISIONING_ACCESS_KEY
 ```
 
 The user associated to the credentials should have the following permissions for IoT Core
@@ -36,22 +37,6 @@ The user associated to the credentials should have the following permissions for
                 "iot:DescribeEndpoint"
             ],
             "Resource": "*"
-        }
-    ]
-}
-```
-
-And for S3
-
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": "s3:PutObject",
-            "Resource": "arn:aws:s3:::soliseco-p1-credentials/*"
         }
     ]
 }

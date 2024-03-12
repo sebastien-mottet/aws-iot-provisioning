@@ -8,33 +8,31 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DEFAULT_POLICY_NAME = "Soliseco-P1-Policy"
-DEFAULT_BUCKET_NAME = "soliseco-p1-credentials"
 DEFAULT_ROOT_CA_URL = "https://www.amazontrust.com/repository/AmazonRootCA1.pem"
+DEFAULT_DJANGO_PROVISIONING_URL = "https://staging.soliseco.snakecase.be/api-v1/device/provision/"
 
 parser = argparse.ArgumentParser(
     prog="IoT Core Provisioning",
     description="Provision device on AWS IoTCore"
 )
 parser.add_argument('--thing-name', dest="thing_name", required=True)
-parser.add_argument('--uuid', dest="uuid", required=True)
 
 parser.add_argument('--policiy-name', dest="policy_name", default=DEFAULT_POLICY_NAME)
 parser.add_argument('--output-dir', dest="output_dir", default="./")
-parser.add_argument('--bucket-name', dest="bucket_name", default=DEFAULT_BUCKET_NAME)
 parser.add_argument('--local-save', dest="local_save", action=argparse.BooleanOptionalAction, default=True)
-parser.add_argument('--s3-save', dest="s3_save", action=argparse.BooleanOptionalAction, default=True)
+parser.add_argument('--django-provisioning', dest="django_provisioning", action=argparse.BooleanOptionalAction, default=True)
 parser.add_argument('--root-ca-url', dest="root_ca_url", default=DEFAULT_ROOT_CA_URL)
+parser.add_argument('--django-provisioning-url', dest="django_provsioning_url", default=DEFAULT_DJANGO_PROVISIONING_URL)
 
 args = parser.parse_args()
 
 THING_NAME = args.thing_name
 POLICY_NAME = args.policy_name
 OUTPUT_DIR = args.output_dir
-BUCKET_NAME = args.bucket_name
 LOCAL_SAVE = args.local_save
-S3_SAVE = args.s3_save
+DJANGO_PROVISIONING = args.django_provisioning
+DJANGO_PROVISIONING_URL = args.django_provsioning_url
 ROOT_CA_URL = args.root_ca_url
-UUID = args.uuid
 
 session = boto3.Session(region_name='eu-central-1')
 
@@ -62,30 +60,21 @@ def create_thing(thing_name, policy_name):
     return certificate, private_key, pub_key
 
 
-def save_to_s3(uuid, thing_name, bucket_name, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url):
-    cert_obj_key = uuid + '/' + thing_name + '.pem.crt'
-    cert_object = s3.Object(bucket_name, cert_obj_key)
-    cert_object.put(Body=certificate)
+def provision_on_django(thing_name, certificate, private_key, pub_key):
+    files = {
+        'private_key': private_key,
+        'public_key': pub_key,
+        'cert': certificate
+    }
+    data = {
+        "device_id": thing_name,
+        "secret": os.environ['DEVICE_PROVISIONING_ACCESS_KEY']
+    }
+    resp = requests.post(DJANGO_PROVISIONING_URL, data=data, files=files)
+    return resp.json()
 
-    private_key_obj_key = uuid + '/' + thing_name + '.private.pem.key'
-    private_key_obj = s3.Object(bucket_name, private_key_obj_key)
-    private_key_obj.put(Body=private_key)
-
-    pub_key_obj_key = uuid + '/' + thing_name + '.public.pem.key'
-    pub_key_object = s3.Object(bucket_name, pub_key_obj_key)
-    pub_key_object.put(Body=pub_key)
-
-    amazon_root_ca_obj_key = uuid + '/AmazonRootCA1.pem'
-    amazon_root_ca_obj = s3.Object(bucket_name, amazon_root_ca_obj_key)
-    amazon_root_ca_obj.put(Body=amazon_root_CA1)
-
-    endpoint_url_obj_key = uuid + '/endpoint_url.json'
-    endpoint_url_obj = s3.Object(bucket_name, endpoint_url_obj_key)
-    endpoint_url_obj.put(Body=endpoint_url)
-
-
-def save_to_fs(uuid, thing_name, output_dir, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url):
-    new_dir = os.path.join(output_dir, uuid)
+def save_to_fs(thing_name, output_dir, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url):
+    new_dir = os.path.join(output_dir, thing_name)
     if not os.path.exists(new_dir):
         os.mkdir(new_dir)
     amazon_root_ca_path = os.path.join(new_dir, 'AmazonRootCA1.pem')
@@ -126,7 +115,7 @@ amazon_root_CA1 = get_amazon_root_ca(ROOT_CA_URL)
 endpoint_url = get_endpoint_url()
 
 if LOCAL_SAVE:
-    save_to_fs(UUID, THING_NAME, OUTPUT_DIR, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url)
+    save_to_fs(THING_NAME, OUTPUT_DIR, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url)
 
-if S3_SAVE:
-    save_to_s3(UUID, THING_NAME, BUCKET_NAME, certificate, private_key, pub_key, amazon_root_CA1, endpoint_url)
+if DJANGO_PROVISIONING:
+    provision_on_django(THING_NAME, certificate, private_key, pub_key)
