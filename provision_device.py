@@ -9,7 +9,7 @@ load_dotenv()
 
 DEFAULT_POLICY_NAME = "Soliseco-P1-Policy"
 DEFAULT_ROOT_CA_URL = "https://www.amazontrust.com/repository/AmazonRootCA1.pem"
-DEFAULT_DJANGO_PROVISIONING_URL = "https://staging.soliseco.snakecase.be/api-v1/device/provision/"
+DEFAULT_DJANGO_PROVISIONING_URL = "http://localhost:8000/api-v1/device/provision/"
 
 parser = argparse.ArgumentParser(
     prog="IoT Core Provisioning",
@@ -19,7 +19,7 @@ parser.add_argument('--thing-name', dest="thing_name", required=True)
 
 parser.add_argument('--policiy-name', dest="policy_name", default=DEFAULT_POLICY_NAME)
 parser.add_argument('--output-dir', dest="output_dir", default="./")
-parser.add_argument('--local-save', dest="local_save", action=argparse.BooleanOptionalAction, default=True)
+parser.add_argument('--local-save', dest="local_save", action=argparse.BooleanOptionalAction, default=False)
 parser.add_argument('--django-provisioning', dest="django_provisioning", action=argparse.BooleanOptionalAction, default=True)
 parser.add_argument('--root-ca-url', dest="root_ca_url", default=DEFAULT_ROOT_CA_URL)
 parser.add_argument('--django-provisioning-url', dest="django_provsioning_url", default=DEFAULT_DJANGO_PROVISIONING_URL)
