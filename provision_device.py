@@ -7,32 +7,42 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DEFAULT_POLICY_NAME = "Soliseco-P1-Policy"
+ENV_PARAMETERS = {
+    "prod": {
+        "policy_name": "Soliseco-P1-Policy-Prod",
+        "django_provisioning_url": "https://prod.soliseco.snakecase.be/api-v1/device/provision/",
+    },
+    "staging": {
+        "policy_name": "Soliseco-P1-Policy-Staging",
+        "django_provisioning_url": "https://staging.soliseco.snakecase.be/api-v1/device/provision/",
+    }
+}
+
 DEFAULT_ROOT_CA_URL = "https://www.amazontrust.com/repository/AmazonRootCA1.pem"
-DEFAULT_DJANGO_PROVISIONING_URL = "http://localhost:8000/api-v1/device/provision/"
 
 parser = argparse.ArgumentParser(
     prog="IoT Core Provisioning",
     description="Provision device on AWS IoTCore"
 )
 parser.add_argument('--thing-name', dest="thing_name", required=True)
+parser.add_argument('--env', dest="env", choices=['prod', 'staging'], required=True)
 
-parser.add_argument('--policiy-name', dest="policy_name", default=DEFAULT_POLICY_NAME)
 parser.add_argument('--output-dir', dest="output_dir", default="./")
 parser.add_argument('--local-save', dest="local_save", action=argparse.BooleanOptionalAction, default=False)
 parser.add_argument('--django-provisioning', dest="django_provisioning", action=argparse.BooleanOptionalAction, default=True)
 parser.add_argument('--root-ca-url', dest="root_ca_url", default=DEFAULT_ROOT_CA_URL)
-parser.add_argument('--django-provisioning-url', dest="django_provsioning_url", default=DEFAULT_DJANGO_PROVISIONING_URL)
 
 args = parser.parse_args()
 
 THING_NAME = args.thing_name
-POLICY_NAME = args.policy_name
+ENV = args.env
 OUTPUT_DIR = args.output_dir
 LOCAL_SAVE = args.local_save
 DJANGO_PROVISIONING = args.django_provisioning
-DJANGO_PROVISIONING_URL = args.django_provsioning_url
 ROOT_CA_URL = args.root_ca_url
+
+POLICY_NAME = ENV_PARAMETERS[ENV]['policy_name']
+DJANGO_PROVISIONING_URL = ENV_PARAMETERS[ENV]['django_provisioning_url']
 
 session = boto3.Session(region_name='eu-central-1')
 
@@ -40,13 +50,19 @@ iot_client = session.client('iot')
 s3 = session.resource('s3')
 
 
-def create_thing(thing_name, policy_name):
+def create_thing(thing_name, policy_name, env):
     try:
         # Check if thing already exists
         iot_client.describe_thing(thingName=thing_name)
     except iot_client.exceptions.ResourceNotFoundException:
         # Create thing corresponding to sensor
-        iot_client.create_thing(thingName=thing_name)
+        iot_client.create_thing(
+            thingName=thing_name,
+            thingTypeName="P1",
+            attributePayload={
+                "attributes": {"env": env}
+            }
+        )
     else:
         raise Exception('Thing already exists')
 
@@ -108,7 +124,7 @@ def get_endpoint_url():
     print(endpoint_url)
     return json.dumps({'url': endpoint_url}, indent=4)
 
-certificate, private_key, pub_key = create_thing(THING_NAME, POLICY_NAME)
+certificate, private_key, pub_key = create_thing(THING_NAME, POLICY_NAME, ENV)
 
 amazon_root_CA1 = get_amazon_root_ca(ROOT_CA_URL)
 
