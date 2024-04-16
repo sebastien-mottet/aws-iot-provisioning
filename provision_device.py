@@ -15,6 +15,10 @@ ENV_PARAMETERS = {
     "staging": {
         "policy_name": "Soliseco-P1-Policy-Staging",
         "django_provisioning_url": "https://staging.soliseco.snakecase.be/api-v1/device/provision/",
+    },
+    "dev": {
+        "policy_name": "Soliseco-P1-Policy-Staging",
+        "django_provisioning_url": "http://localhost:8000/api-v1/device/provision/",
     }
 }
 
@@ -25,7 +29,7 @@ parser = argparse.ArgumentParser(
     description="Provision device on AWS IoTCore"
 )
 parser.add_argument('--thing-name', dest="thing_name", required=True)
-parser.add_argument('--env', dest="env", choices=['prod', 'staging'], required=True)
+parser.add_argument('--env', dest="env", choices=list(ENV_PARAMETERS.keys()), required=True)
 
 parser.add_argument('--output-dir', dest="output_dir", default="./")
 parser.add_argument('--local-save', dest="local_save", action=argparse.BooleanOptionalAction, default=False)
