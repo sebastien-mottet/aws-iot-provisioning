@@ -10,11 +10,11 @@ load_dotenv()
 ENV_PARAMETERS = {
     "prod": {
         "policy_name": "Soliseco-P1-Policy-Prod",
-        "django_provisioning_url": "https://prod.soliseco.snakecase.be/api-v1/device/provision/",
+        "django_provisioning_url": "https://admin.my.soliseco.com/api-v1/device/provision/",
     },
     "staging": {
         "policy_name": "Soliseco-P1-Policy-Staging",
-        "django_provisioning_url": "https://staging.soliseco.snakecase.be/api-v1/device/provision/",
+        "django_provisioning_url": "https://admin.my-staging.soliseco.com/api-v1/device/provision/",
     },
     "dev": {
         "policy_name": "Soliseco-P1-Policy-Staging",
